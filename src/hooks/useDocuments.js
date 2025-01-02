@@ -1,66 +1,77 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useState, useCallback } from 'react';
+import { documentService } from '../services/documentService';
 import { useApp } from '../context/AppContext';
 
-const useAuth = () => {
-  const navigate = useNavigate();
-  const { setUser } = useApp();
-  const [isLoading, setIsLoading] = useState(true);
+const useDocuments = () => {
+  const { currentIdeaId, setDocuments } = useApp();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const login = useCallback(async (username, password) => {
+  const fetchDocuments = useCallback(async () => {
+    if (!currentIdeaId) {
+      throw new Error('No idea ID found');
+    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const { user } = await authService.login(username, password);
-      setUser(user);
-      return user;
+      // Fetch all three documents simultaneously
+      const [reqResponse, techResponse, lifecycleResponse] = await Promise.all([
+        documentService.fetchDocument('requirements', currentIdeaId),
+        documentService.fetchDocument('technical', currentIdeaId),
+        documentService.fetchDocument('lifecycle', currentIdeaId)
+      ]);
+
+      const newDocuments = {
+        userRequirements: reqResponse.document || '',
+        technicalAspects: techResponse.document || '',
+        lifeCycle: lifecycleResponse.document || ''
+      };
+
+      setDocuments(newDocuments);
+      return newDocuments;
     } catch (err) {
-      setError(err.message || 'Failed to login');
-      throw err;
+      const errorMessage = err.message || 'Failed to fetch documents';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [setUser]);
+  }, [currentIdeaId, setDocuments]);
 
-  const logout = useCallback(async () => {
+  const reviseDocument = useCallback(async (type, revisionPrompt) => {
+    if (!currentIdeaId) {
+      throw new Error('No idea ID found');
+    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      await authService.logout();
-      setUser(null);
-      navigate('/login');
+      const response = await documentService.reviseDocument(type, currentIdeaId, revisionPrompt);
+      
+      setDocuments(prev => ({
+        ...prev,
+        [type]: response.document
+      }));
+
+      return response.document;
     } catch (err) {
-      setError(err.message || 'Failed to logout');
-      throw err;
+      const errorMessage = err.message || 'Failed to revise document';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [setUser, navigate]);
-
-  useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        // Implement session check logic here if needed
-        setIsLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  }, [currentIdeaId, setDocuments]);
 
   return {
-    login,
-    logout,
     isLoading,
-    error
+    error,
+    fetchDocuments,
+    reviseDocument
   };
 };
 
-export default useAuth;
+export default useDocuments;

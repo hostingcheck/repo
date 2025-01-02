@@ -1,7 +1,6 @@
-import  { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import PropTypes from 'prop-types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Toggle from '../components/common/Toggle';
@@ -20,9 +19,9 @@ const DocumentViewer = ({ content, isOpen, onClose }) => (
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          exit={{ scale: 0.95, opacity: 0 }}
           className="w-full max-w-4xl max-h-[80vh] bg-gray-900/90 rounded-lg shadow-xl overflow-hidden"
         >
           <div className="p-6 border-b border-white/10 flex justify-between items-center">
@@ -39,7 +38,7 @@ const DocumentViewer = ({ content, isOpen, onClose }) => (
           <div className="p-6 overflow-y-auto max-h-[calc(80vh-100px)]">
             <div className="prose prose-invert max-w-none">
               {content.split('\n').map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
+                <p key={index} className="mb-4">{paragraph}</p>
               ))}
             </div>
           </div>
@@ -49,16 +48,10 @@ const DocumentViewer = ({ content, isOpen, onClose }) => (
   </AnimatePresence>
 );
 
-DocumentViewer.propTypes = {
-  content: PropTypes.string.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-};
-
 const DocumentationPage = () => {
   const navigate = useNavigate();
   const { currentIdeaId, documents } = useApp();
-  const { fetchDocuments, reviseDocument } = useDocuments(currentIdeaId);
+  const { isLoading: isDocLoading, fetchDocuments, reviseDocument } = useDocuments();
   
   const [selectedDocs, setSelectedDocs] = useState({
     userRequirements: false,
@@ -69,14 +62,23 @@ const DocumentationPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [viewerContent, setViewerContent] = useState('');
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!currentIdeaId) {
-      navigate('/idea');
-      return;
-    }
-    
-    fetchDocuments();
+    const loadDocuments = async () => {
+      if (!currentIdeaId) {
+        navigate('/idea');
+        return;
+      }
+
+      try {
+        await fetchDocuments();
+      } catch (err) {
+        setError('Failed to load documents. Please try again.');
+      }
+    };
+
+    loadDocuments();
   }, [currentIdeaId, fetchDocuments, navigate]);
 
   const handleRevision = async () => {
@@ -85,10 +87,11 @@ const DocumentationPage = () => {
     }
 
     setIsLoading(true);
+    setError('');
 
     try {
       const revisionPromises = Object.entries(selectedDocs)
-        .filter(([docType, isSelected]) => isSelected)
+        .filter(([_, isSelected]) => isSelected)
         .map(([docType]) => reviseDocument(docType, revisionText));
 
       await Promise.all(revisionPromises);
@@ -98,8 +101,8 @@ const DocumentationPage = () => {
         technicalAspects: false,
         lifeCycle: false
       });
-    } catch (error) {
-      console.error('Revision failed:', error);
+    } catch (err) {
+      setError('Failed to revise documents. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -109,6 +112,14 @@ const DocumentationPage = () => {
     setViewerContent(content);
     setIsViewerOpen(true);
   };
+
+  if (isDocLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-12 px-6">
@@ -126,6 +137,16 @@ const DocumentationPage = () => {
           </p>
         </motion.div>
 
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-red-500/20 border border-red-500 rounded-lg p-4 text-center text-red-500"
+          >
+            {error}
+          </motion.div>
+        )}
+
         {/* Document Cards */}
         <div className="grid gap-6">
           {Object.entries(documents).map(([type, content], index) => (
@@ -137,7 +158,7 @@ const DocumentationPage = () => {
             >
               <Card 
                 hoverable
-                className="overflow-hidden cursor-pointer"
+                className="overflow-hidden cursor-pointer transform hover:scale-[1.02] transition-transform duration-200"
                 onClick={() => openDocument(content)}
               >
                 <div className="p-6">
@@ -194,7 +215,7 @@ const DocumentationPage = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
                     <LoadingSpinner size="sm" />
-                    <span>Updating</span>
+                    <span>Updating...</span>
                   </div>
                 ) : (
                   'Regenerate'
@@ -205,14 +226,20 @@ const DocumentationPage = () => {
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-center mt-8">
+        <motion.div 
+          className="flex justify-center mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
           <Button
             onClick={() => navigate('/generate-images')}
             variant="premium"
+            className="px-12 py-4"
           >
             Continue
           </Button>
-        </div>
+        </motion.div>
       </div>
 
       {/* Document Viewer Modal */}
@@ -221,6 +248,16 @@ const DocumentationPage = () => {
         isOpen={isViewerOpen}
         onClose={() => setIsViewerOpen(false)}
       />
+
+      {/* Background Effects */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+      >
+        <div className="absolute inset-0 bg-gradient-radial from-primary/20 via-transparent to-transparent opacity-50" />
+      </motion.div>
     </div>
   );
 };

@@ -1,83 +1,112 @@
-import { productVisionApi, ENDPOINTS } from '../utils/api';
+import { productVisionApi } from '../utils/api';
 
 export const documentService = {
   generateDocuments: async (idea, domain) => {
-    const response = await productVisionApi.post(ENDPOINTS.userInput, {
-      idea,
-      domain
-    });
-    return response.data;
+    try {
+      const response = await productVisionApi.post('/user-input', {
+        idea,
+        domain
+      });
+
+      if (response.status !== 201) {
+        throw new Error('Failed to generate documents');
+      }
+
+      return response.data; // Contains the ID we'll use for subsequent requests
+    } catch (error) {
+      console.error('Error generating documents:', error);
+      throw error;
+    }
   },
 
   fetchDocument: async (type, userId) => {
-    const response = await productVisionApi.get(
-      `${ENDPOINTS.generateDocument}/${type}/${userId}`
-    );
-    return response.data;
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    try {
+      const response = await productVisionApi.get(
+        `/generate-document/${type}/${userId}`
+      );
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch ${type} document`);
+      }
+
+      // Clean up the response by removing special characters
+      const cleanDocument = response.data.document
+        .replaceAll('*', '')
+        .replaceAll('#', '')
+        .trim();
+
+      return {
+        ...response.data,
+        document: cleanDocument
+      };
+    } catch (error) {
+      console.error(`Error fetching ${type} document:`, error);
+      throw error;
+    }
   },
 
   reviseDocument: async (type, userId, revisionPrompt) => {
-    const response = await productVisionApi.post(
-      `${ENDPOINTS.reviseDocument}/${type}/${userId}`,
-      { revisionPrompt }
-    );
-    return response.data;
-  },
+    if (!userId || !revisionPrompt) {
+      throw new Error('User ID and revision prompt are required');
+    }
 
-  // Enhanced RFP generation and download
-  generateRfp: async (id) => {
     try {
-      // First, trigger RFP generation
-      const response = await productVisionApi.get(`${ENDPOINTS.generateRfp}/${id}`);
-      
-      // Then download the generated RFP
-      const downloadResponse = await productVisionApi.get(
-        `${ENDPOINTS.downloadRfp}/${id}`,
-        {
-          responseType: 'blob', // Important for file download
-          headers: {
-            'Accept': 'application/pdf'
-          }
-        }
+      const response = await productVisionApi.post(
+        `/revise-document/${type}/${userId}`,
+        { revisionPrompt }
       );
 
-      return downloadResponse.data;
+      if (response.status !== 200) {
+        throw new Error(`Failed to revise ${type} document`);
+      }
+
+      // Clean up the response by removing special characters
+      const cleanDocument = response.data.document
+        .replaceAll('*', '')
+        .replaceAll('#', '')
+        .trim();
+
+      return {
+        ...response.data,
+        document: cleanDocument
+      };
     } catch (error) {
-      console.error('RFP Generation/Download Error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to generate/download RFP');
+      console.error(`Error revising ${type} document:`, error);
+      throw error;
     }
   },
 
-  // Helper method to handle RFP download directly
-  downloadRfp: async (id) => {
+  // Added RFP generation function
+  generateRfp: async (userId) => {
+    if (!userId) {
+      throw new Error('User ID is required for RFP generation');
+    }
+
     try {
-      const response = await productVisionApi.get(
-        `${ENDPOINTS.downloadRfp}/${id}`,
+      const response = await fetch(
+        `https://product-vision-api.onrender.com/api/generate-rfp/${userId}`,
         {
-          responseType: 'blob',
+          method: 'GET',
           headers: {
             'Accept': 'application/pdf'
           }
         }
       );
-      
-      // Create a blob from the response data
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a link and trigger download
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RFP-${id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
 
-      return true;
+      if (!response.ok) {
+        throw new Error(`Failed to generate RFP. Status: ${response.status}`);
+      }
+
+      return response.blob();
     } catch (error) {
-      console.error('RFP Download Error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to download RFP');
+      console.error('Error generating RFP:', error);
+      throw error;
     }
   }
 };
+
+export default documentService;
