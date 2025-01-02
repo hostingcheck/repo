@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/assets/logos/ideaforge-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>IdeaForge - Turn your ideas into reality</title>
+    <meta name="title" content="IdeaForge - Turn your ideas into reality">
+    <meta name="description" content="Transform your ideas into fully functional products with IdeaForge. Generate documentation, websites, and connect with fellow innovators.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ideaforge.com/">
+    <meta property="og:title" content="IdeaForge - Turn your ideas into reality">
+    <meta property="og:description" content="Transform your ideas into fully functional products with IdeaForge. Generate documentation, websites, and connect with fellow innovators.">
+    <meta property="og:image" content="/assets/images/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://ideaforge.com/">
+    <meta property="twitter:title" content="IdeaForge - Turn your ideas into reality">
+    <meta property="twitter:description" content="Transform your ideas into fully functional products with IdeaForge. Generate documentation, websites, and connect with fellow innovators.">
+    <meta property="twitter:image" content="/assets/images/og-image.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Prevent flash of unstyled content -->
+    <style>
+      body {
+        background-color: #000000;
+        margin: 0;
+      }
+      
+      /* Loading animation */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000000;
+        z-index: 9999;
+      }
+
+      .initial-loader__logo {
+        width: 80px;
+        height: 80px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.5; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.5; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Initial loading state -->
+      <div class="initial-loader">
+        <img 
+          src="/assets/logos/ideaforge-logo.png" 
+          alt="IdeaForge" 
+          class="initial-loader__logo"
+        />
+      </div>
+    </div>
+    
+    <!-- Application entry point -->
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Preload critical assets -->
+    <link 
+      rel="preload" 
+      href="/assets/images/bg2.png" 
+      as="image" 
+      type="image/png"
+    >
+    <link 
+      rel="preload" 
+      href="/assets/logos/ideaforge-logo.png" 
+      as="image" 
+      type="image/png"
+    >
+  </body>
+</html>
