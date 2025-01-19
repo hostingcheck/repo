@@ -226,12 +226,12 @@ const DownloadPage = () => {
             className="flex justify-center"
           >
             <Button
-              onClick={() => navigate('/premium')}
-              variant="premium"
-              className="px-12 py-4"
-            >
-              Continue to Premium
-            </Button>
+  onClick={() => navigate('/premium')}
+  variant="primary"
+  className="px-12 py-4"
+>
+  Continue
+</Button>
           </motion.div>
         </div>
       </div>

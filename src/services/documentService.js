@@ -64,6 +64,8 @@ export const documentService = {
         throw new Error(`Failed to revise ${type} document`);
       }
 
+      console.log(response.data);
+
       // Clean up the response by removing special characters
       const cleanDocument = response.data.document
         .replaceAll('*', '')
@@ -85,23 +87,24 @@ export const documentService = {
     if (!userId) {
       throw new Error('User ID is required for RFP generation');
     }
-
+  
     try {
-      const response = await fetch(
-        `https://product-vision-api.onrender.com/api/generate-rfp/${userId}`,
+      const response = await productVisionApi.post(
+        `/generate-rfp/${userId}`,
+        {},
         {
-          method: 'GET',
           headers: {
             'Accept': 'application/pdf'
-          }
+          },
+          responseType: 'blob'
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate RFP. Status: ${response.status}`);
+  
+      if (response.status !== 200) {
+        throw new Error('Failed to generate RFP');
       }
-
-      return response.blob();
+  
+      return response.data;
     } catch (error) {
       console.error('Error generating RFP:', error);
       throw error;

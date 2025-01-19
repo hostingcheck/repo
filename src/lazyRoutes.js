@@ -11,6 +11,7 @@ const PremiumPage = lazy(() => import('./pages/PremiumPage'));
 const SuccessPage = lazy(() => import('./pages/SuccessPage'));
 const WebsiteGenerationPage = lazy(() => import('./pages/WebsiteGenerationPage'));
 const ExploreIdeasPage = lazy(() => import('./pages/ExploreIdeasPage'));
+const LeadGenerationPage = lazy(() => import('./pages/LeadGenerationPage'));
 
 export const lazyRoutes = [
   {
@@ -52,5 +53,9 @@ export const lazyRoutes = [
   {
     path: '/explore',
     component: ExploreIdeasPage
+  },
+  {
+    path: '/lead-generation',
+    component: LeadGenerationPage
   }
 ];
