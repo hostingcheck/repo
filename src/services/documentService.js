@@ -1,27 +1,27 @@
-import { productVisionApi } from '../utils/api';
+import { productVisionApi } from "../utils/api";
 
 export const documentService = {
   generateDocuments: async (idea, domain) => {
     try {
-      const response = await productVisionApi.post('/user-input', {
+      const response = await productVisionApi.post("/user-input", {
         idea,
-        domain
+        domain,
       });
 
       if (response.status !== 201) {
-        throw new Error('Failed to generate documents');
+        throw new Error("Failed to generate documents");
       }
 
       return response.data; // Contains the ID we'll use for subsequent requests
     } catch (error) {
-      console.error('Error generating documents:', error);
+      console.error("Error generating documents:", error);
       throw error;
     }
   },
 
   fetchDocument: async (type, userId) => {
     if (!userId) {
-      throw new Error('User ID is required');
+      throw new Error("User ID is required");
     }
 
     try {
@@ -35,13 +35,13 @@ export const documentService = {
 
       // Clean up the response by removing special characters
       const cleanDocument = response.data.document
-        .replaceAll('*', '')
-        .replaceAll('#', '')
+        .replaceAll("*", "")
+        .replaceAll("#", "")
         .trim();
 
       return {
         ...response.data,
-        document: cleanDocument
+        document: cleanDocument,
       };
     } catch (error) {
       console.error(`Error fetching ${type} document:`, error);
@@ -51,7 +51,7 @@ export const documentService = {
 
   reviseDocument: async (type, userId, revisionPrompt) => {
     if (!userId || !revisionPrompt) {
-      throw new Error('User ID and revision prompt are required');
+      throw new Error("User ID and revision prompt are required");
     }
 
     try {
@@ -68,13 +68,13 @@ export const documentService = {
 
       // Clean up the response by removing special characters
       const cleanDocument = response.data.document
-        .replaceAll('*', '')
-        .replaceAll('#', '')
+        .replaceAll("*", "")
+        .replaceAll("#", "")
         .trim();
 
       return {
         ...response.data,
-        document: cleanDocument
+        document: cleanDocument,
       };
     } catch (error) {
       console.error(`Error revising ${type} document:`, error);
@@ -85,31 +85,48 @@ export const documentService = {
   // Added RFP generation function
   generateRfp: async (userId) => {
     if (!userId) {
-      throw new Error('User ID is required for RFP generation');
+      throw new Error("User ID is required for RFP generation");
     }
-  
+
     try {
       const response = await productVisionApi.post(
         `/generate-rfp/${userId}`,
         {},
         {
-          headers: {
-            'Accept': 'application/pdf'
-          },
-          responseType: 'blob'
+          // headers: {
+          //   Accept: "application/pdf",
+          // },
+          responseType: "json",
         }
       );
-  
+
       if (response.status !== 200) {
-        throw new Error('Failed to generate RFP');
+        throw new Error("Failed to generate RFP");
       }
-  
-      return response.data;
+
+      const cleanDocument = response.data.document
+        .replaceAll("*", "") // Remove all asterisks
+        .replaceAll("#", "") // Remove all hash symbols
+        .trim(); // Remove any leading/trailing whitespace
+
+      console.log("Cleaned Document:", cleanDocument);
+
+      // Attempt to parse the cleaned document if it is valid JSON
+      // try {
+      //   const parsedDocument = JSON.parse(cleanDocument);
+      //   console.log("Parsed Document:", parsedDocument.document);
+      //   // console.log(parsedDocument.message);
+      //   return parsedDocument.data.document;
+      // } catch (error) {
+      //   console.error("Error parsing JSON:", error);
+      // }
+      console.log(typeof cleanDocument);
+      return cleanDocument;
     } catch (error) {
-      console.error('Error generating RFP:', error);
+      console.error("Error generating RFP:", error);
       throw error;
     }
-  }
+  },
 };
 
 export default documentService;

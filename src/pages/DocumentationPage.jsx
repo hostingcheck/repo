@@ -54,9 +54,9 @@ const DocumentationPage = () => {
   const { isLoading: isDocLoading, fetchDocuments, reviseDocument } = useDocuments();
   
   const [selectedDocs, setSelectedDocs] = useState({
-    userRequirements: false,
-    technicalAspects: false,
-    lifeCycle: false
+    requirements: false,
+    technical: false,
+    lifecycle: false
   });
   const [revisionText, setRevisionText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -97,9 +97,9 @@ const DocumentationPage = () => {
       await Promise.all(revisionPromises);
       setRevisionText('');
       setSelectedDocs({
-        userRequirements: false,
-        technicalAspects: false,
-        lifeCycle: false
+        requirements: false,
+        technical: false,
+        lifecycle: false
       });
     } catch (err) {
       setError('Failed to revise documents. Please try again.');
